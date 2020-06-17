@@ -6,32 +6,41 @@ use glob::glob;
 
 type Result<T> = std::result::Result<T, Box<dyn ::std::error::Error>>;
 
-const USAGE: &str = "Usage: an <command> <files>...
+const VERSION: &str = "0.2.0";
 
-Analyse Notes.
+fn print_version() -> Result<()> {
+    println!("an v{}", VERSION);
+    Ok(())
+}
+
+fn print_usage() -> Result<()> {
+    println!("Usage: an <command> <files>...
+
+Analyse Notes {}
 
 Commands:
     Complexity    Complexity of the structure
     Headercount   Number of headers
     Size          Filesize in bytes
     Structure     Show ToC of each file
-    Help          Display this message";
+    Help          Display this message", VERSION);
+    Ok(())
+}
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().skip(1).collect();
-    if args.len() < 2 {
-        println!("{}", USAGE);
-        std::process::exit(1);
+    if args.is_empty() {
+        print_usage()?;
+        std::process::exit(1); 
     }
+    let files = if args[1..].is_empty() { md_files_in_curdir()? } else { args[1..].to_vec() };
     match args[0].to_lowercase().as_str() {
-        "complexity" => note_complexity(&args[1..]),
-        "headercount" => note_header_count(&args[1..]),
-        "size"|"bytes" => note_size(&args[1..]),
-        "structure"|"toc" => note_structure(&args[1..]),
-        "help" => {
-            println!("{}", USAGE);
-            Ok(())
-        },
+        "complexity" => note_complexity(&files),
+        "headercount" => note_header_count(&files),
+        "size"|"bytes" => note_size(&files),
+        "structure"|"toc" => note_structure(&files),
+        "version"|"-v" => print_version(),
+        "help"|"-h" => print_usage(),
         _ => {
             println!("Unrecognised command: {}", args[0]); 
             Ok(())
@@ -39,10 +48,10 @@ fn main() -> Result<()> {
     }
 }
 
-fn md_files_in_curdir() -> Result<Vec<PathBuf>> {
+fn md_files_in_curdir() -> Result<Vec<String>> {
     Ok(glob("*.md")?
         .filter(|x| x.is_ok())
-        .map(|x| x.expect("Already tested each glob is ok"))
+        .map(|x| x.expect("Already tested each glob is ok").to_string_lossy().to_string())
         .collect())
 }
 
