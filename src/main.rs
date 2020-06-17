@@ -1,31 +1,41 @@
 #![allow(dead_code, unused_variables)]
+use std::env;
 use std::path::PathBuf;
 
 use glob::glob;
-use structopt::StructOpt;
 
 type Result<T> = std::result::Result<T, Box<dyn ::std::error::Error>>;
 
-/// AnalyseNotes. Various utilities for summarising notes.
-#[derive(StructOpt, Debug)]
-enum Command {
-    /// Calculate complexity of the Stringucture of each file
-    Complexity { files: Vec<String> },
-    /// Count number of headers in each file
-    Headercount { files: Vec<String> },
-    /// Show the size of each file
-    Size { files: Vec<String> },
-    /// Show the Structure of each file
-    Structure { files: Vec<String> },
-}
+const USAGE: &str = "Usage: an <command> <files>...
+
+Analyse Notes.
+
+Commands:
+    Complexity    Complexity of the structure
+    Headercount   Number of headers
+    Size          Filesize in bytes
+    Structure     Show ToC of each file
+    Help          Display this message";
 
 fn main() -> Result<()> {
-    let command = Command::from_args();
-    match command {
-        Command::Complexity { files } => note_complexity(&files[..]),
-        Command::Headercount { files } => note_header_count(&files[..]),
-        Command::Size { files } => note_size(&files[..]),
-        Command::Structure { files } => note_structure(&files[..]),
+    let args: Vec<String> = env::args().skip(1).collect();
+    if args.len() < 2 {
+        println!("{}", USAGE);
+        std::process::exit(1);
+    }
+    match args[0].to_lowercase().as_str() {
+        "complexity" => note_complexity(&args[1..]),
+        "headercount" => note_header_count(&args[1..]),
+        "size"|"bytes" => note_size(&args[1..]),
+        "structure"|"toc" => note_structure(&args[1..]),
+        "help" => {
+            println!("{}", USAGE);
+            Ok(())
+        },
+        _ => {
+            println!("Unrecognised command: {}", args[0]); 
+            Ok(())
+        },
     }
 }
 
