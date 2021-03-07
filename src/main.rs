@@ -1,56 +1,100 @@
-#![allow(dead_code, unused_variables)]
-use std::env;
 use std::path::PathBuf;
 
+use anyhow::Result;
 use glob::glob;
+use structopt::clap::AppSettings;
+use structopt::StructOpt;
 
-type Result<T> = std::result::Result<T, Box<dyn ::std::error::Error>>;
+#[macro_use]
+extern crate lazy_static;
 
-const VERSION: &str = "0.4.0";
+mod links;
 
-fn print_version() -> Result<()> {
-    println!("an v{}", VERSION);
-    Ok(())
+#[derive(StructOpt, Debug)]
+#[structopt(name="an", setting=AppSettings::InferSubcommands)]
+struct Opts {
+    /// Which subcommand to run
+    #[structopt(subcommand)]
+    cmd: Command,
 }
 
-fn print_usage() -> Result<()> {
-    println!(
-        "Usage: an <command> <files>...
-
-Analyse Notes {}
-
-Commands:
-    Complexity    Complexity of the structure
-    Headercount   Number of headers
-    Size          Filesize in bytes
-    Structure     Show ToC of each file
-    Help          Display this message",
-        VERSION
-    );
-    Ok(())
+#[derive(StructOpt, Debug)]
+enum Command {
+    /// Complexity of the header structure
+    Complexity {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+    },
+    /// How many headers
+    Headercount {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+    },
+    /// Filesize in bytes
+    #[structopt(alias = "bytes")]
+    Size {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+    },
+    /// ToC of each file
+    #[structopt(alias = "toc")]
+    Structure {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+    },
+    /// Show broken links
+    Links {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+        /// Only run on local links
+        #[structopt(short = "l", long = "local")]
+        local: bool,
+    },
 }
 
 fn main() -> Result<()> {
-    let args: Vec<String> = env::args().skip(1).collect();
-    if args.is_empty() {
-        print_usage()?;
-        std::process::exit(1);
-    }
-    let files = if args[1..].is_empty() {
-        md_files_in_curdir()?
-    } else {
-        args[1..].to_vec()
-    };
-    match args[0].to_lowercase().as_str() {
-        "complexity" => note_complexity(&files),
-        "headercount" => note_header_count(&files),
-        "size" | "bytes" => note_size(&files),
-        "structure" | "toc" => note_structure(&files),
-        "version" | "-v" => print_version(),
-        "help" | "-h" => print_usage(),
-        _ => {
-            println!("Unrecognised command: {}", args[0]);
-            Ok(())
+    let opts = Opts::from_args();
+    let curdir_files = md_files_in_curdir()?;
+    match opts.cmd {
+        Command::Complexity { files } => {
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            note_complexity(&files)
+        }
+        Command::Headercount { files } => {
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            note_header_count(&files)
+        }
+        Command::Size { files } => {
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            note_size(&files)
+        }
+        Command::Structure { files } => {
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            note_structure(&files)
+        }
+        Command::Links { files, local } => {
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            nonexistent_links(&files, local)
         }
     }
 }
@@ -126,6 +170,32 @@ fn note_structure(files: &[String]) -> Result<()> {
         println!("{}", filename);
         for header in get_headers(filename.into())? {
             println!("    {}", header);
+        }
+    }
+    Ok(())
+}
+
+fn nonexistent_links(files: &[String], local_only: bool) -> Result<()> {
+    for filename in files {
+        let mut broken = Vec::new();
+        for link in links::from_file(&filename) {
+            if local_only && !(link.linktype == links::LinkType::Local) {
+                continue;
+            }
+            if !link.is_alive() {
+                broken.push(link);
+            }
+        }
+        if !broken.is_empty() {
+            println!("{}", filename);
+            for link in broken {
+                if local_only {
+                    println!("> {}", link.text);
+                } else {
+                    println!("> {:?} {}", link.linktype, link.text);
+                }
+            }
+            println!();
         }
     }
     Ok(())
