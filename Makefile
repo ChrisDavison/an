@@ -27,8 +27,8 @@ check:
 clean:
 	cargo clean
 
-release:
+release: $(BIN_NAME)
 	$$(rg version Cargo.toml | head -n1 | sed -e 's/.*"\(.*\)"/\1/g' > VERSION)
-	gh release create v$$(cat VERSION) --title v$$(cat VERSION) target/$(TARGET_WIN)/release/$(BIN_NAME).exe target/$(TARGET_LINUX)/release/$(BIN_NAME)
+	gh release create "v$$(cat VERSION)" --title "Release v$$(cat VERSION)" target/$(TARGET_WIN)/release/$(BIN_NAME).exe target/$(TARGET_LINUX)/release/$(BIN_NAME)
 	git fetch --tags origin
 	rm VERSION
