@@ -1,6 +1,6 @@
 [package]
 name = "an"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Chris Davison <c.jr.davison@gmail.com>"]
 edition = "2018"
 
@@ -16,3 +16,4 @@ futures = "0.3"
 tokio = {version = "0.2", features=["full"]}
 lazy_static = "1.4.0"
 tagsearch = "0.27.0"
+mdlc = "0.4.0"

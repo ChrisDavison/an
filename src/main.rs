@@ -2,15 +2,11 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use glob::glob;
+use mdlc::links;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use tagsearch::filter::Filter;
 use tagsearch::utility::get_tags_for_file;
-
-#[macro_use]
-extern crate lazy_static;
-
-mod links;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name="an", setting=AppSettings::InferSubcommands)]
