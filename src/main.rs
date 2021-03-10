@@ -4,6 +4,8 @@ use anyhow::Result;
 use glob::glob;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
+use tagsearch::filter::Filter;
+use tagsearch::utility::get_tags_for_file;
 
 #[macro_use]
 extern crate lazy_static;
@@ -50,6 +52,18 @@ enum Command {
         #[structopt(short = "l", long = "local")]
         local: bool,
     },
+    /// Show tags for each file
+    Tags {
+        files: Vec<String>,
+        /// Tags that the file must have
+        #[structopt(short = "t")]
+        keywords: Vec<String>,
+        /// Tags that the file must NOT have
+        #[structopt(short = "n")]
+        not: Vec<String>,
+    },
+    /// Show untagged files
+    Untagged { files: Vec<String> },
 }
 
 fn main() -> Result<()> {
@@ -94,7 +108,28 @@ fn main() -> Result<()> {
             } else {
                 files
             };
-            nonexistent_links(&files, local)
+            broken_links(&files, local)
+        }
+        Command::Tags {
+            files,
+            keywords,
+            not,
+        } => {
+            let filter = Filter::new(keywords.as_slice(), not.as_slice(), false);
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            display_tags_for_each(filter, &files)
+        }
+        Command::Untagged { files } => {
+            let files = if files.is_empty() {
+                curdir_files
+            } else {
+                files
+            };
+            display_untagged_files(&files)
         }
     }
 }
@@ -108,6 +143,34 @@ fn md_files_in_curdir() -> Result<Vec<String>> {
                 .to_string()
         })
         .collect())
+}
+
+fn display_tags_for_each(filter: Filter, files: &[String]) -> Result<()> {
+    for filename in files {
+        let tags = get_tags_for_file(filename);
+        if tags.is_empty() || !filter.matches(&tags) {
+            continue;
+        }
+        println!(
+            "{:40} {}",
+            filename,
+            tags.iter()
+                .map(|x| format!("@{}", x))
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
+    }
+    Ok(())
+}
+
+fn display_untagged_files(files: &[String]) -> Result<()> {
+    for filename in files {
+        if !get_tags_for_file(filename).is_empty() {
+            continue;
+        }
+        println!("{}", filename,);
+    }
+    Ok(())
 }
 
 fn note_size(files: &[String]) -> Result<()> {
@@ -175,7 +238,7 @@ fn note_structure(files: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn nonexistent_links(files: &[String], local_only: bool) -> Result<()> {
+fn broken_links(files: &[String], local_only: bool) -> Result<()> {
     for filename in files {
         let mut broken = Vec::new();
         for link in links::from_file(&filename) {

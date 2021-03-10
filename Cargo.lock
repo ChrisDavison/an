@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "an"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "futures",
@@ -22,6 +22,7 @@ dependencies = [
  "regex",
  "reqwest",
  "structopt",
+ "tagsearch",
  "tokio",
 ]
 
@@ -1021,6 +1022,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "tagsearch"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0cd95dc878cfcfba44c5e4cbc1c4f10f0b069d5a43bc3fb6a97ef50c3c68b0d5"
+dependencies = [
+ "glob",
+ "lazy_static",
+ "regex",
+ "structopt",
 ]
 
 [[package]]
