@@ -173,7 +173,7 @@ fn note_size(files: &[String]) -> Result<()> {
     let mut sizes = Vec::new();
     for filename in files {
         let nbytes = std::fs::metadata(filename)?.len();
-        sizes.push((nbytes as f64 / 1024 as f64, filename));
+        sizes.push((nbytes as f64 / 1024_f64, filename));
     }
     sizes.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     for (size, filename) in sizes {
@@ -188,7 +188,7 @@ fn note_complexity(files: &[String]) -> Result<()> {
         let mut sum = 0;
         let mut num = 0.000001; // Prevent divide-by-zero
         for header in get_headers(filename.into())? {
-            let depth = header.split(" ").nth(0).unwrap().len();
+            let depth = header.split(' ').next().unwrap().len();
             sum += depth;
             num += 1.0;
         }

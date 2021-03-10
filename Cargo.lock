@@ -507,14 +507,16 @@ checksum = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
 
 [[package]]
 name = "mdlc"
-version = "0.4.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fe0fa753fdc8f535e3fd273cf906f6e5999588af58c654e8ebf1d3c91b88ba6"
+checksum = "793b32be3944bb1b37cc9e5827e28734f654c4ad55674d50155099c40e8bcd3b"
 dependencies = [
+ "anyhow",
  "glob",
  "lazy_static",
  "regex",
  "reqwest",
+ "structopt",
 ]
 
 [[package]]
@@ -842,9 +844,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.4.3"
+version = "1.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9251239e129e16308e70d853559389de218ac275b515068abc96829d05b948a"
+checksum = "9c3780fcf44b193bc4d09f36d2a3c87b251da4a046c87795a0d35f4f927ad8e6"
 dependencies = [
  "aho-corasick",
  "memchr",
