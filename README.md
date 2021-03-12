@@ -1,5 +1,7 @@
 # an - Analyse Notes
 
+[![Rust](https://github.com/ChrisDavison/an/actions/workflows/rust.yml/badge.svg)](https://github.com/ChrisDavison/an/actions/workflows/rust.yml)
+
 A bunch of features for analysing markdown notes that I find myself going back
 to over and over again, wrapped up in a single tool.
 
