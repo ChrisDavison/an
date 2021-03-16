@@ -48,6 +48,11 @@ case $1 in
     name)
         echo $BIN_NAME ;; 
     release) gh_release ;;
+    docs)
+        sudo pandoc --standalone --from markdown --to man \
+            doc/${BIN_NAME}.1.md \
+            --output /usr/local/share/man/man1/${BIN_NAME}.1
+        ;;
     *) 
         echo "$USAGE" ;;
 esac
