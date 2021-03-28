@@ -1,10 +1,9 @@
 TARGET_LINUX:=x86_64-unknown-linux-gnu
-TARGET_WINDOWS:=x86_64-pc-windows-gnu
-BIN_NAME:=$(shell grep name Cargo.toml | sed -e 's/.* = "\(.*\)"/\1/')
+TARGET_WIN:=x86_64-pc-windows-gnu
+VERSION:=$(shell grep version Cargo.toml | sed -e 's/.* = "\(.*\)"/\1/' | head -n1)
+BIN_NAME:=$(shell grep name Cargo.toml | sed -e 's/.* = "\(.*\)"/\1/' | head -n1)
 BIN_WIN:=target/${TARGET_WIN}/release/${BIN_NAME}.exe
 BIN_LINUX:=target/${TARGET_LINUX}/release/${BIN_NAME}
-
-VERSION:=$(shell grep version Cargo.toml | sed -e 's/.* = "\(.*\)"/\1/')
 SRC=$(wildcard **/*.rs)
 
 .PHONY: build build_linux build_windows
@@ -19,10 +18,10 @@ build_linux_release: ${SRC}
 	@cargo build --target=${TARGET_LINUX} --release
 
 build_windows: ${SRC}
-	@cargo build --target=${TARGET_WINDOWS}
+	@cargo build --target=${TARGET_WIN}
 
 build_windows_release: ${SRC}
-	@cargo build --target=${TARGET_WINDOWS} --release
+	@cargo build --target=${TARGET_WIN} --release
 
 check: ${SRC}
 	@cargo check
