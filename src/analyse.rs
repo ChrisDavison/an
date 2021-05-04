@@ -34,10 +34,15 @@ pub fn note_complexity(files: &[String]) -> Result<()> {
 }
 
 pub fn get_headers(filename: PathBuf) -> Result<Vec<String>> {
+    let headerchar = match filename.extension().and_then(std::ffi::OsStr::to_str) {
+        Some("org") => '*',
+        Some("md") => '#',
+        _ => unreachable!("Shouldn't be possible as glob only searches for these extensions."),
+    };
     let contents = std::fs::read_to_string(filename)?;
     let headers = contents
         .lines()
-        .filter(|l| l.starts_with('#'))
+        .filter(|l| l.starts_with(headerchar))
         .map(|l| l.to_string())
         .collect();
     Ok(headers)
