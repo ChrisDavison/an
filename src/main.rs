@@ -29,8 +29,7 @@ enum Command {
         files: Vec<String>,
     },
     /// ToC of each file
-    #[structopt(alias = "toc")]
-    Structure {
+    Toc {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
     },
@@ -72,7 +71,7 @@ fn main() -> Result<()> {
         Command::Complexity { files } => analyse::note_complexity(&files_or_curdir(&files)?),
         Command::Headercount { files } => analyse::note_header_count(&files_or_curdir(&files)?),
         Command::Size { files } => analyse::note_size(&files_or_curdir(&files)?),
-        Command::Structure { files } => analyse::note_structure(&files_or_curdir(&files)?),
+        Command::Toc { files } => analyse::note_structure(&files_or_curdir(&files)?),
         Command::Links { files, local } => links::broken_links(&files_or_curdir(&files)?, local),
         Command::Untagged { files } => tags::display_untagged_files(&files_or_curdir(&files)?),
         Command::Search { query } => search::search(&files_or_curdir(&[])?, &query),
