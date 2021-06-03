@@ -35,14 +35,17 @@ pub fn note_complexity(files: &[String]) -> Result<()> {
 
 pub fn get_headers(filename: PathBuf) -> Result<Vec<String>> {
     let headerchar = match filename.extension().and_then(std::ffi::OsStr::to_str) {
-        Some("org") => '*',
-        Some("md") => '#',
+        Some("org") => "*",
+        Some("md") => "#",
         _ => unreachable!("Shouldn't be possible as glob only searches for these extensions."),
     };
     let contents = std::fs::read_to_string(filename)?;
     let headers = contents
         .lines()
-        .filter(|l| l.starts_with(headerchar))
+        .filter(|l| {
+            let first = l.split(' ').nth(0).unwrap_or(" ");
+            !first.is_empty() && first == headerchar.repeat(first.len())
+        })
         .map(|l| l.to_string())
         .collect();
     Ok(headers)
