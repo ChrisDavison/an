@@ -17,14 +17,10 @@ pub fn note_size(files: &[String]) -> Result<()> {
 pub fn note_complexity(files: &[String]) -> Result<()> {
     let mut complexities = Vec::new();
     for filename in files {
-        let mut sum = 0;
-        let mut num = 0.000001; // Prevent divide-by-zero
-        for header in get_headers(filename.into())? {
-            let depth = header.split(' ').next().unwrap().len();
-            sum += depth;
-            num += 1.0;
-        }
-        complexities.push((sum as f64 / num as f64, filename));
+        let headers = get_headers(filename)?;
+        let sum: usize = headers.iter().map(|(_h, d)| d).sum();
+        let num = (headers.len() as f32) + 0.000000001;
+        complexities.push(((sum as f32 / num), filename));
     }
     complexities.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     for (complexity, filename) in complexities {
@@ -33,20 +29,30 @@ pub fn note_complexity(files: &[String]) -> Result<()> {
     Ok(())
 }
 
-pub fn get_headers(filename: PathBuf) -> Result<Vec<String>> {
-    let headerchar = match filename.extension().and_then(std::ffi::OsStr::to_str) {
+fn header_char<'a>(filename: &'a PathBuf) -> &'a str {
+    match filename.extension().and_then(std::ffi::OsStr::to_str) {
         Some("org") => "*",
         Some("md") => "#",
         _ => unreachable!("Shouldn't be possible as glob only searches for these extensions."),
-    };
-    let contents = std::fs::read_to_string(filename)?;
+    }
+}
+
+pub fn get_headers(filename: impl Into<PathBuf>) -> Result<Vec<(String, usize)>> {
+    let path = filename.into();
+    let headerchar = header_char(&path);
+    let contents = std::fs::read_to_string(&path)?;
     let headers = contents
         .lines()
         .filter(|l| {
             let first = l.split(' ').nth(0).unwrap_or(" ");
             !first.is_empty() && first == headerchar.repeat(first.len())
         })
-        .map(|l| l.to_string())
+        .map(|l| {
+            (
+                l.trim_start_matches(headerchar).trim().to_string(),
+                l.split(" ").nth(0).unwrap().len(),
+            )
+        })
         .collect();
     Ok(headers)
 }
@@ -54,7 +60,7 @@ pub fn get_headers(filename: PathBuf) -> Result<Vec<String>> {
 pub fn note_header_count(files: &[String]) -> Result<()> {
     let mut counts = Vec::new();
     for filename in files {
-        let num = get_headers(filename.into())?.len();
+        let num = get_headers(filename)?.len();
         counts.push((num, filename));
     }
     counts.sort_by_key(|&(n, _)| n);
@@ -66,9 +72,13 @@ pub fn note_header_count(files: &[String]) -> Result<()> {
 
 pub fn note_structure(files: &[String]) -> Result<()> {
     for filename in files {
+        let mut all_headers = get_headers(filename)?;
+        all_headers.push((String::new(), 0)); // hack to allow zipping without skipping last header
         println!("{}", filename);
-        for header in get_headers(filename.into())? {
-            println!("    {}", header);
+        for ((header, depth), (_, depth2)) in all_headers.iter().zip(all_headers.iter().skip(1)) {
+            let marker = if depth2 == depth { "├" } else { "└" };
+            let indent = " ".repeat(depth * 2);
+            println!("{}{} H{}: {}", indent, marker, depth, header);
         }
     }
     Ok(())
