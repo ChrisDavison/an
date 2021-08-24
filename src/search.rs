@@ -28,12 +28,10 @@ fn word_counter(filename: &str) -> Result<HashMap<String, usize>> {
     let mut wordcount = HashMap::new();
     let f = std::fs::File::open(&filename)?;
     let buf = std::io::BufReader::new(f);
-    for word in buf.split(b' ') {
-        if let Ok(word) = word {
-            let s = String::from_utf8_lossy(&word).to_string();
-            let e = wordcount.entry(s).or_insert(0);
-            *e += 1;
-        }
+    for word in buf.split(b' ').flatten() {
+        let s = String::from_utf8_lossy(&word).to_string();
+        let e = wordcount.entry(s).or_insert(0);
+        *e += 1;
     }
     Ok(wordcount)
 }

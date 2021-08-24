@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub fn note_size(files: &[String]) -> Result<()> {
     let mut sizes = Vec::new();
@@ -29,7 +29,7 @@ pub fn note_complexity(files: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn header_char<'a>(filename: &'a PathBuf) -> &'a str {
+fn header_char(filename: &Path) -> &str {
     match filename.extension().and_then(std::ffi::OsStr::to_str) {
         Some("org") => "*",
         Some("md") => "#",
@@ -44,13 +44,13 @@ pub fn get_headers(filename: impl Into<PathBuf>) -> Result<Vec<(String, usize)>>
     let headers = contents
         .lines()
         .filter(|l| {
-            let first = l.split(' ').nth(0).unwrap_or(" ");
+            let first = l.split(' ').next().unwrap_or(" ");
             !first.is_empty() && first == headerchar.repeat(first.len())
         })
         .map(|l| {
             (
                 l.trim_start_matches(headerchar).trim().to_string(),
-                l.split(" ").nth(0).unwrap().len(),
+                l.split(' ').next().unwrap().len(),
             )
         })
         .collect();
