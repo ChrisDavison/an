@@ -7,7 +7,10 @@ pub fn note_size(files: &[String]) -> Result<()> {
         let nbytes = std::fs::metadata(filename)?.len();
         sizes.push((nbytes as f64 / 1024_f64, filename));
     }
-    sizes.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    sizes.sort_by(|a, b| {
+        a.0.partial_cmp(&b.0)
+            .expect("Failed to compare size. Should be impossible.")
+    });
     for (size, filename) in sizes {
         println!("{:.3}kb {}", size, filename);
     }
@@ -22,7 +25,10 @@ pub fn note_complexity(files: &[String]) -> Result<()> {
         let num = (headers.len() as f32) + 0.000000001;
         complexities.push(((sum as f32 / num), filename));
     }
-    complexities.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    complexities.sort_by(|a, b| {
+        a.0.partial_cmp(&b.0)
+            .expect("Failed to compare complexities. Should be impossible.")
+    });
     for (complexity, filename) in complexities {
         println!("{:.3} {}", complexity, filename);
     }
@@ -50,7 +56,7 @@ pub fn get_headers(filename: impl Into<PathBuf>) -> Result<Vec<(String, usize)>>
         .map(|l| {
             (
                 l.trim_start_matches(headerchar).trim().to_string(),
-                l.split(' ').next().unwrap().len(),
+                l.split(' ').next().unwrap_or("").len(),
             )
         })
         .collect();

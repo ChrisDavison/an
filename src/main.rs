@@ -60,7 +60,7 @@ enum Command {
     /// Search notes, returning matching filenames
     Search {
         /// Words to search for
-        #[structopt(required=true)]
+        #[structopt(required = true)]
         query: Vec<String>,
     },
 }

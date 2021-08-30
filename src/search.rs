@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::collections::{HashSet};
+use std::collections::BTreeSet as Set;
 use std::path::Path;
 
 pub fn search(files: &[String], query: &[String]) -> Result<()> {
@@ -27,9 +27,9 @@ pub fn search(files: &[String], query: &[String]) -> Result<()> {
 }
 
 struct NoteFilter {
-    all_words: HashSet<String>,
-    words: HashSet<String>,
-    tags: HashSet<String>,
+    all_words: Set<String>,
+    words: Set<String>,
+    tags: Set<String>,
 }
 
 impl NoteFilter {
@@ -37,8 +37,7 @@ impl NoteFilter {
         let (tag_words, content_words): (Vec<_>, Vec<_>) =
             words.iter().partition(|w| w.starts_with('@'));
         let tag_set = tag_words.iter().map(|x| x[1..].to_string()).collect();
-        let content_word_set: HashSet<String> =
-            content_words.iter().map(|x| x.to_string()).collect();
+        let content_word_set: Set<String> = content_words.iter().map(|x| x.to_string()).collect();
 
         NoteFilter {
             all_words: content_word_set
@@ -50,27 +49,28 @@ impl NoteFilter {
             tags: tag_set,
         }
     }
-    pub fn matches(&self, path: &Path) -> HashSet<String> {
-        let mut what_matches = HashSet::new();
-        if self.title_matches(path) {
-            what_matches.insert(String::from("title"));
-        }
-        if self.contents_match(path) {
-            what_matches.insert(String::from("contents"));
-        }
-        if self.tags_match(path) {
-            what_matches.insert(String::from("tags"));
-        }
-        what_matches
+    pub fn matches(&self, path: &Path) -> Set<String> {
+        [
+            ("title", self.title_matches(path)),
+            ("contents", self.contents_match(path)),
+            ("tags", self.tags_match(path)),
+        ]
+        .iter()
+        .filter(|(_t, matches)| *matches)
+        .map(|(t, _matches)| t.to_string())
+        .collect()
     }
 
     pub fn title_matches(&self, path: &Path) -> bool {
-        let stem = path.file_stem().unwrap().to_string_lossy();
+        let stem = path
+            .file_stem()
+            .expect("Failed to get file stem.")
+            .to_string_lossy();
         self.all_words.iter().any(|w| stem.contains(w))
     }
 
     pub fn contents_match(&self, path: &Path) -> bool {
-        let contents = std::fs::read_to_string(&path).unwrap();
+        let contents = std::fs::read_to_string(&path).expect("Failed to read file contents.");
         !self.words.is_empty() && self.words.iter().all(|word| contents.contains(word))
     }
 

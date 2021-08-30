@@ -49,6 +49,15 @@ How many headers are in the file. Sorted output.
 
 Filesize in bytes. Sorted output.
 
+### `search`
+
+`an search <word>...`
+
+Search for each of `word` across 1) file titles, 2) file contents, 3) file tags.
+
+- Words starting with `@` will be searched in title and tags.
+- Words not starting with `@` will be searched in title and contents
+
 ### `structure`
 
 `an structure <files>...`
