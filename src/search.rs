@@ -1,37 +1,81 @@
 use anyhow::Result;
-use std::collections::HashMap;
-use std::io::BufRead;
+use std::collections::{HashSet};
+use std::path::Path;
 
 pub fn search(files: &[String], query: &[String]) -> Result<()> {
-    let mut matches: Vec<(String, usize)> = Vec::new();
+    let filter = NoteFilter::new(query);
     for filename in files {
-        let words = word_counter(&filename)?;
-        let scores: Vec<_> = query
-            .iter()
-            .map(|q| *words.get(q).unwrap_or(&0))
-            .filter(|v| v != &0)
-            .collect();
-        if scores.len() == query.len() {
-            let score = scores.iter().sum();
-            matches.push((filename.to_string(), score));
+        let p = std::path::Path::new(&filename);
+        let matches = filter.matches(p);
+        if matches.is_empty() {
+            continue;
         }
+        let parts = vec![
+            if matches.contains("title") { "T" } else { " " },
+            if matches.contains("tags") { "t" } else { " " },
+            if matches.contains("contents") {
+                "c"
+            } else {
+                " "
+            },
+        ]
+        .join("");
+        println!("{} {:60}", parts, p.to_string_lossy(),);
     }
-    // Sort high to low
-    matches.sort_by(|a, b| b.1.cmp(&a.1));
-    for (name, score) in matches {
-        println!("{:>3} {}", score, name);
-    }
+
     Ok(())
 }
 
-fn word_counter(filename: &str) -> Result<HashMap<String, usize>> {
-    let mut wordcount = HashMap::new();
-    let f = std::fs::File::open(&filename)?;
-    let buf = std::io::BufReader::new(f);
-    for word in buf.split(b' ').flatten() {
-        let s = String::from_utf8_lossy(&word).to_string();
-        let e = wordcount.entry(s).or_insert(0);
-        *e += 1;
+struct NoteFilter {
+    all_words: HashSet<String>,
+    words: HashSet<String>,
+    tags: HashSet<String>,
+}
+
+impl NoteFilter {
+    pub fn new(words: &[String]) -> NoteFilter {
+        let (tag_words, content_words): (Vec<_>, Vec<_>) =
+            words.iter().partition(|w| w.starts_with('@'));
+        let tag_set = tag_words.iter().map(|x| x[1..].to_string()).collect();
+        let content_word_set: HashSet<String> =
+            content_words.iter().map(|x| x.to_string()).collect();
+
+        NoteFilter {
+            all_words: content_word_set
+                .iter()
+                .chain(&tag_set)
+                .map(|x| x.to_string())
+                .collect(),
+            words: content_word_set,
+            tags: tag_set,
+        }
     }
-    Ok(wordcount)
+    pub fn matches(&self, path: &Path) -> HashSet<String> {
+        let mut what_matches = HashSet::new();
+        if self.title_matches(path) {
+            what_matches.insert(String::from("title"));
+        }
+        if self.contents_match(path) {
+            what_matches.insert(String::from("contents"));
+        }
+        if self.tags_match(path) {
+            what_matches.insert(String::from("tags"));
+        }
+        what_matches
+    }
+
+    pub fn title_matches(&self, path: &Path) -> bool {
+        let stem = path.file_stem().unwrap().to_string_lossy();
+        self.all_words.iter().any(|w| stem.contains(w))
+    }
+
+    pub fn contents_match(&self, path: &Path) -> bool {
+        let contents = std::fs::read_to_string(&path).unwrap();
+        !self.words.is_empty() && self.words.iter().all(|word| contents.contains(word))
+    }
+
+    pub fn tags_match(&self, path: &Path) -> bool {
+        let file_tags = tagsearch::utility::get_tags_for_file(&path.to_string_lossy().to_string());
+        !self.tags.is_empty() && self.tags.iter().all(|t| file_tags.contains(t))
+    }
 }

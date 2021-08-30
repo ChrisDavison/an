@@ -4,7 +4,7 @@ use mdlc::links;
 pub fn broken_links(files: &[String], local_only: bool) -> Result<()> {
     for filename in files {
         let mut broken = Vec::new();
-        for link in links::from_file(&filename) {
+        for link in links::from_file(filename) {
             if local_only && !(link.linktype == links::LinkType::Local) {
                 continue;
             }
