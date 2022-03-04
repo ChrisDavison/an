@@ -1,32 +1,57 @@
 use anyhow::Result;
 use glob::glob;
-use structopt::clap::AppSettings;
-use structopt::StructOpt;
 use tagsearch::filter::Filter;
+
+use clap::{Parser, Subcommand};
 
 mod analyse;
 mod links;
 mod search;
 mod tags;
 
-#[derive(StructOpt, Debug)]
-#[structopt(name="an", setting=AppSettings::InferSubcommands)]
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+#[clap(propagate_version = true)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
 enum Command {
     /// Complexity of the header structure
     Complexity {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
+        /// Show only top n items
+        #[clap(short, long)]
+        n: Option<usize>,
+        /// Show in descending, not ascending order
+        #[clap(short, long)]
+        reverse: bool,
     },
     /// How many headers
     Headercount {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
+        /// Show only top n items
+        #[clap(short, long)]
+        n: Option<usize>,
+        /// Show in descending, not ascending order
+        #[clap(short, long)]
+        reverse: bool,
     },
     /// Filesize in bytes
-    #[structopt(alias = "bytes")]
+    #[clap(alias = "bytes")]
     Size {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
+        /// Show only top n items
+        #[clap(short, long)]
+        n: Option<usize>,
+        /// Show in descending, not ascending order
+        #[clap(short, long)]
+        reverse: bool,
     },
     /// ToC of each file
     Toc {
@@ -38,7 +63,7 @@ enum Command {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
         /// Only run on local links
-        #[structopt(short = "l", long = "local")]
+        #[clap(short = 'l', long = "local")]
         local: bool,
     },
     /// Show tags for each file
@@ -46,10 +71,10 @@ enum Command {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
         /// Tags that the file must have
-        #[structopt(short = "t")]
+        #[clap(short = 't')]
         keywords: Vec<String>,
         /// Tags that the file must NOT have
-        #[structopt(short = "n")]
+        #[clap(short = 'n')]
         not: Vec<String>,
     },
     /// Show untagged files
@@ -60,18 +85,24 @@ enum Command {
     /// Search notes, returning matching filenames
     Search {
         /// Words to search for
-        #[structopt(required = true)]
+        #[clap(required = true)]
         query: Vec<String>,
     },
 }
 
 fn main() -> Result<()> {
-    let opts = Command::from_args();
+    let opts = Cli::parse();
 
-    match opts {
-        Command::Complexity { files } => analyse::note_complexity(&files_or_curdir(&files)?),
-        Command::Headercount { files } => analyse::note_header_count(&files_or_curdir(&files)?),
-        Command::Size { files } => analyse::note_size(&files_or_curdir(&files)?),
+    match opts.command {
+        Command::Complexity { files, n, reverse } => {
+            analyse::note_complexity(&files_or_curdir(&files)?, n, reverse)
+        }
+        Command::Headercount { files, n, reverse } => {
+            analyse::note_header_count(&files_or_curdir(&files)?, n, reverse)
+        }
+        Command::Size { files, n, reverse } => {
+            analyse::note_size(&files_or_curdir(&files)?, n, reverse)
+        }
         Command::Toc { files } => analyse::note_structure(&files_or_curdir(&files)?),
         Command::Links { files, local } => links::broken_links(&files_or_curdir(&files)?, local),
         Command::Untagged { files } => tags::display_untagged_files(&files_or_curdir(&files)?),

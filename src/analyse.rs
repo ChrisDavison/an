@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 
-pub fn note_size(files: &[String]) -> Result<()> {
+pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
     let mut sizes = Vec::new();
     for filename in files {
         let nbytes = std::fs::metadata(filename)?.len();
@@ -11,13 +11,18 @@ pub fn note_size(files: &[String]) -> Result<()> {
         a.0.partial_cmp(&b.0)
             .expect("Failed to compare size. Should be impossible.")
     });
-    for (size, filename) in sizes {
+    if reverse {
+        sizes.reverse();
+    }
+
+    let to_take = n.unwrap_or(sizes.len());
+    for (size, filename) in sizes.iter().take(to_take) {
         println!("{:.3}kb {}", size, filename);
     }
     Ok(())
 }
 
-pub fn note_complexity(files: &[String]) -> Result<()> {
+pub fn note_complexity(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
     let mut complexities = Vec::new();
     for filename in files {
         let headers = get_headers(filename)?;
@@ -29,7 +34,12 @@ pub fn note_complexity(files: &[String]) -> Result<()> {
         a.0.partial_cmp(&b.0)
             .expect("Failed to compare complexities. Should be impossible.")
     });
-    for (complexity, filename) in complexities {
+    if reverse {
+        complexities.reverse();
+    }
+    let to_take = n.unwrap_or(complexities.len());
+
+    for (complexity, filename) in complexities.iter().take(to_take) {
         println!("{:.3} {}", complexity, filename);
     }
     Ok(())
@@ -63,14 +73,19 @@ pub fn get_headers(filename: impl Into<PathBuf>) -> Result<Vec<(String, usize)>>
     Ok(headers)
 }
 
-pub fn note_header_count(files: &[String]) -> Result<()> {
+pub fn note_header_count(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
     let mut counts = Vec::new();
     for filename in files {
         let num = get_headers(filename)?.len();
         counts.push((num, filename));
     }
     counts.sort_by_key(|&(n, _)| n);
-    for (num, filename) in counts {
+    if reverse {
+        counts.reverse();
+    }
+    let to_take = n.unwrap_or(counts.len());
+
+    for (num, filename) in counts.iter().take(to_take) {
         println!("{} {}", num, filename);
     }
     Ok(())
