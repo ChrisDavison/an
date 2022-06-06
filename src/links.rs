@@ -1,8 +1,9 @@
 use anyhow::Result;
 use mdlc::links;
+use rayon::prelude::*;
 
 pub fn broken_links(files: &[String], local_only: bool) -> Result<()> {
-    for filename in files {
+    files.par_iter().for_each(|filename| {
         let mut broken = Vec::new();
         for link in links::from_file(filename) {
             if local_only && !(link.linktype == links::LinkType::Local) {
@@ -15,13 +16,14 @@ pub fn broken_links(files: &[String], local_only: bool) -> Result<()> {
         if !broken.is_empty() {
             println!("{}", filename);
             for link in broken {
-                if local_only {
-                    println!("> {}", link.text);
-                } else {
-                }
+                println!("> {}", link.text);
+                // if local_only {
+                //     println!("> {}", link.text);
+                // } else {
+                // }
             }
             println!();
         }
-    }
+    });
     Ok(())
 }

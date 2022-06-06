@@ -1,12 +1,18 @@
 use anyhow::Result;
+use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 
 pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
-    let mut sizes = Vec::new();
-    for filename in files {
-        let nbytes = std::fs::metadata(filename)?.len();
-        sizes.push((nbytes as f64 / 1024_f64, filename));
-    }
+    // let mut sizes = Vec::new();
+    let mut sizes: Vec<_> = files
+        .par_iter()
+        .map(|filename| {
+            let nbytes = std::fs::metadata(filename)
+                .map(|meta| meta.len())
+                .unwrap_or(0);
+            (nbytes as f64 / 1024_f64, filename)
+        })
+        .collect();
     sizes.sort_by(|a, b| {
         a.0.partial_cmp(&b.0)
             .expect("Failed to compare size. Should be impossible.")
@@ -23,13 +29,16 @@ pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()
 }
 
 pub fn note_complexity(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
-    let mut complexities = Vec::new();
-    for filename in files {
-        let headers = get_headers(filename)?;
-        let sum: usize = headers.iter().map(|(_h, d)| d).sum();
-        let num = (headers.len() as f32) + 0.000000001;
-        complexities.push(((sum as f32 / num), filename));
-    }
+    // let mut complexities = Vec::new();
+    let mut complexities: Vec<_> = files
+        .par_iter()
+        .map(|filename| {
+            let headers = get_headers(filename).unwrap_or_else(|_| Vec::new());
+            let sum: usize = headers.iter().map(|(_h, d)| d).sum();
+            let num = (headers.len() as f32) + 0.000000001;
+            ((sum as f32 / num), filename)
+        })
+        .collect();
     complexities.sort_by(|a, b| {
         a.0.partial_cmp(&b.0)
             .expect("Failed to compare complexities. Should be impossible.")
@@ -74,11 +83,16 @@ pub fn get_headers(filename: impl Into<PathBuf>) -> Result<Vec<(String, usize)>>
 }
 
 pub fn note_header_count(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
-    let mut counts = Vec::new();
-    for filename in files {
-        let num = get_headers(filename)?.len();
-        counts.push((num, filename));
-    }
+    let mut counts: Vec<_> = files
+        .par_iter()
+        .map(|filename| {
+            (
+                get_headers(filename).unwrap_or_else(|_| Vec::new()).len(),
+                filename,
+            )
+        })
+        .collect();
+
     counts.sort_by_key(|&(n, _)| n);
     if reverse {
         counts.reverse();
