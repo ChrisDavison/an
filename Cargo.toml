@@ -16,5 +16,5 @@ futures = "0.3"
 tokio = {version = "0.2", features=["full"]}
 lazy_static = "1.4.0"
 tagsearch = "0.27.0"
-mdlc = "0.6.0"
+mdlc = "0.7.0"
 rayon = "*"
