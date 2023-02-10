@@ -595,13 +595,14 @@ checksum = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
 
 [[package]]
 name = "mdlc"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "793b32be3944bb1b37cc9e5827e28734f654c4ad55674d50155099c40e8bcd3b"
+checksum = "e1739a5e83baeef82658080a8e44f8abfbd50f98a19ab9898f6980edbce76ec9"
 dependencies = [
  "anyhow",
  "glob",
  "lazy_static",
+ "rayon",
  "regex",
  "reqwest",
  "structopt",
