@@ -1,6 +1,32 @@
 use anyhow::Result;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
+use std::io::Read;
+
+fn wc(filename: &str) -> usize {
+    let mut file = std::fs::File::open(filename).unwrap();
+    let mut buf = [0; 4096];
+    let mut wc = 0;
+    let mut last_was_whitespace = true;
+    loop {
+        let bytes = file.read(&mut buf).unwrap();
+        if bytes == 0 {
+            break;
+        }
+
+        for &i in &buf[..bytes] {
+            if i == b' ' || i == b'\n' || i == b'\r' || i == b'\t' {
+                if !last_was_whitespace {
+                    wc += 1;
+                }
+                last_was_whitespace = true;
+            }else{
+                last_was_whitespace = false;
+            }
+        }
+    }
+    wc
+}
 
 pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
     // let mut sizes = Vec::new();
@@ -27,6 +53,30 @@ pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()
     }
     Ok(())
 }
+
+pub fn wordcount(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
+    // let mut sizes = Vec::new();
+    let mut sizes: Vec<_> = files
+        .par_iter()
+        .map(|filename| {
+            (wc(filename), filename)
+        })
+        .collect();
+    sizes.sort_by(|a, b| {
+        a.0.partial_cmp(&b.0)
+            .expect("Failed to compare size. Should be impossible.")
+    });
+    if reverse {
+        sizes.reverse();
+    }
+
+    let to_take = n.unwrap_or(sizes.len());
+    for (size, filename) in sizes.iter().take(to_take) {
+        println!("{:.3} {}", size, filename);
+    }
+    Ok(())
+}
+
 
 pub fn note_complexity(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
     // let mut complexities = Vec::new();

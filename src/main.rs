@@ -53,6 +53,19 @@ enum Command {
         #[clap(short, long)]
         reverse: bool,
     },
+    /// Wordcount
+    #[clap(alias = "w")]
+    Words {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+        /// Show only top n items
+        #[clap(short, long)]
+        n: Option<usize>,
+        /// Show in descending, not ascending order
+        #[clap(short, long)]
+        reverse: bool,
+    },
+
     /// ToC of each file
     Toc {
         /// Which files to operate on, or all under cwd
@@ -102,6 +115,9 @@ fn main() -> Result<()> {
         }
         Command::Size { files, n, reverse } => {
             analyse::note_size(&files_or_curdir(&files)?, n, reverse)
+        }
+        Command::Words { files, n, reverse } => {
+            analyse::wordcount(&files_or_curdir(&files)?, n, reverse)
         }
         Command::Toc { files } => analyse::note_structure(&files_or_curdir(&files)?),
         Command::Links { files, local } => links::broken_links(&files_or_curdir(&files)?, local),
