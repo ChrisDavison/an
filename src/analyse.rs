@@ -54,8 +54,7 @@ pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()
     Ok(())
 }
 
-pub fn wordcount(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
-    // let mut sizes = Vec::new();
+fn count_words(files: &[String]) -> Vec<(usize, &String)> {
     let mut sizes: Vec<_> = files
         .par_iter()
         .map(|filename| {
@@ -66,6 +65,11 @@ pub fn wordcount(files: &[String], n: Option<usize>, reverse: bool) -> Result<()
         a.0.partial_cmp(&b.0)
             .expect("Failed to compare size. Should be impossible.")
     });
+    sizes
+}
+
+pub fn wordcount(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
+    let mut sizes = count_words(files);
     if reverse {
         sizes.reverse();
     }
@@ -77,6 +81,19 @@ pub fn wordcount(files: &[String], n: Option<usize>, reverse: bool) -> Result<()
     Ok(())
 }
 
+pub fn reading_time(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
+    let mut sizes = count_words(files);
+    if reverse {
+        sizes.reverse();
+    }
+
+    let to_take = n.unwrap_or(sizes.len());
+    for (size, filename) in sizes.iter().take(to_take) {
+        let mins = size / 150;
+        println!("{:.3} {}", mins, filename);
+    }
+    Ok(())
+}
 
 pub fn note_complexity(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
     // let mut complexities = Vec::new();

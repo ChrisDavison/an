@@ -10,7 +10,7 @@ pub fn search(files: &[String], query: &[String]) -> Result<()> {
         if matches.is_empty() {
             continue;
         }
-        let parts = vec![
+        let parts = [
             if matches.contains("title") { "T" } else { " " },
             if matches.contains("tags") { "t" } else { " " },
             if matches.contains("contents") {
@@ -70,12 +70,12 @@ impl NoteFilter {
     }
 
     pub fn contents_match(&self, path: &Path) -> bool {
-        let contents = std::fs::read_to_string(&path).expect("Failed to read file contents.");
+        let contents = std::fs::read_to_string(path).expect("Failed to read file contents.");
         !self.words.is_empty() && self.words.iter().all(|word| contents.contains(word))
     }
 
     pub fn tags_match(&self, path: &Path) -> bool {
-        let file_tags = tagsearch::utility::get_tags_for_file(&path.to_string_lossy().to_string());
+        let file_tags = tagsearch::utility::get_tags_for_file(path.to_string_lossy().as_ref());
         !self.tags.is_empty() && self.tags.iter().all(|t| file_tags.contains(t))
     }
 }

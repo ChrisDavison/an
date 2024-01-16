@@ -65,7 +65,18 @@ enum Command {
         #[clap(short, long)]
         reverse: bool,
     },
+    /// Reading time (estimate)
+    Time {
+        /// Which files to operate on, or all under cwd
+        files: Vec<String>,
+        /// Show only top n items
+        #[clap(short, long)]
+        n: Option<usize>,
+        /// Show in descending, not ascending order
+        #[clap(short, long)]
+        reverse: bool,
 
+    },
     /// ToC of each file
     Toc {
         /// Which files to operate on, or all under cwd
@@ -119,6 +130,10 @@ fn main() -> Result<()> {
         Command::Words { files, n, reverse } => {
             analyse::wordcount(&files_or_curdir(&files)?, n, reverse)
         }
+        Command::Time { files, n, reverse } => {
+            analyse::reading_time(&files_or_curdir(&files)?, n, reverse)
+        }
+
         Command::Toc { files } => analyse::note_structure(&files_or_curdir(&files)?),
         Command::Links { files, local } => links::broken_links(&files_or_curdir(&files)?, local),
         Command::Untagged { files } => tags::display_untagged_files(&files_or_curdir(&files)?),
