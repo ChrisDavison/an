@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rayon::prelude::*;
-use std::path::{Path, PathBuf};
 use std::io::Read;
+use std::path::{Path, PathBuf};
 
 fn wc(filename: &str) -> usize {
     let mut file = std::fs::File::open(filename).unwrap();
@@ -20,7 +20,7 @@ fn wc(filename: &str) -> usize {
                     wc += 1;
                 }
                 last_was_whitespace = true;
-            }else{
+            } else {
                 last_was_whitespace = false;
             }
         }
@@ -29,7 +29,6 @@ fn wc(filename: &str) -> usize {
 }
 
 pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()> {
-    // let mut sizes = Vec::new();
     let mut sizes: Vec<_> = files
         .par_iter()
         .map(|filename| {
@@ -57,9 +56,7 @@ pub fn note_size(files: &[String], n: Option<usize>, reverse: bool) -> Result<()
 fn count_words(files: &[String]) -> Vec<(usize, &String)> {
     let mut sizes: Vec<_> = files
         .par_iter()
-        .map(|filename| {
-            (wc(filename), filename)
-        })
+        .map(|filename| (wc(filename), filename))
         .collect();
     sizes.sort_by(|a, b| {
         a.0.partial_cmp(&b.0)
@@ -154,7 +151,7 @@ pub fn note_header_count(files: &[String], n: Option<usize>, reverse: bool) -> R
         .par_iter()
         .map(|filename| {
             (
-                get_headers(filename).unwrap_or_else(|_| Vec::new()).len(),
+                get_headers(filename).map(|x| x.len()).unwrap_or(0),
                 filename,
             )
         })

@@ -75,7 +75,6 @@ enum Command {
         /// Show in descending, not ascending order
         #[clap(short, long)]
         reverse: bool,
-
     },
     /// ToC of each file
     Toc {

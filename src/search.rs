@@ -1,26 +1,25 @@
 use anyhow::Result;
-use std::collections::BTreeSet as Set;
+use std::collections::{
+BTreeSet as Set,
+BTreeMap as Map,
+};
 use std::path::Path;
 
 pub fn search(files: &[String], query: &[String]) -> Result<()> {
     let filter = NoteFilter::new(query);
     for filename in files {
         let p = std::path::Path::new(&filename);
-        let matches = filter.matches(p);
-        if matches.is_empty() {
-            continue;
-        }
-        let parts = [
-            if matches.contains("title") { "T" } else { " " },
-            if matches.contains("tags") { "t" } else { " " },
-            if matches.contains("contents") {
-                "c"
-            } else {
-                " "
-            },
-        ]
-        .join("");
-        println!("{} {:60}", parts, p.to_string_lossy(),);
+        let m = filter.matches(p);
+        let out = [
+            if *m.get("title").unwrap_or(&false) { "T" } else {" "},
+            if *m.get("tags").unwrap_or(&false) { "t" } else {" "},
+            if *m.get("contents").unwrap_or(&false) { "c" } else {" "},
+        ].join("");
+        println!(
+            "{} {:60}",
+            out,
+            p.to_string_lossy(),
+        );
     }
 
     Ok(())
@@ -49,16 +48,13 @@ impl NoteFilter {
             tags: tag_set,
         }
     }
-    pub fn matches(&self, path: &Path) -> Set<String> {
-        [
-            ("title", self.title_matches(path)),
-            ("contents", self.contents_match(path)),
-            ("tags", self.tags_match(path)),
-        ]
-        .iter()
-        .filter(|(_t, matches)| *matches)
-        .map(|(t, _matches)| t.to_string())
-        .collect()
+
+    pub fn matches(&self, path: &Path) -> Map<&str, bool> {
+        let mut out = Map::new();
+        out.insert("title", self.title_matches(path));
+        out.insert("contents", self.contents_match(path));
+        out.insert("tags", self.tags_match(path));
+        out
     }
 
     pub fn title_matches(&self, path: &Path) -> bool {
