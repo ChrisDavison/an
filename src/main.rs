@@ -5,6 +5,7 @@ use tagsearch::filter::Filter;
 use clap::{Parser, Subcommand};
 
 mod analyse;
+#[cfg(feature="links")]
 mod links;
 mod search;
 mod tags;
@@ -81,6 +82,7 @@ enum Command {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
     },
+    #[cfg(feature="links")]
     /// Show broken links
     Links {
         /// Which files to operate on, or all under cwd
@@ -134,6 +136,7 @@ fn main() -> Result<()> {
         }
 
         Command::Toc { files } => analyse::note_structure(&files_or_curdir(&files)?),
+        #[cfg(feature="links")]
         Command::Links { files, local } => links::broken_links(&files_or_curdir(&files)?, local),
         Command::Untagged { files } => tags::display_untagged_files(&files_or_curdir(&files)?),
         Command::Search { query } => search::search(&files_or_curdir(&[])?, &query),
