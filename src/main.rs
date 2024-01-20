@@ -5,7 +5,6 @@ use tagsearch::filter::Filter;
 use clap::{Parser, Subcommand};
 
 mod analyse;
-#[cfg(feature="links")]
 mod links;
 mod search;
 mod tags;
@@ -82,7 +81,6 @@ enum Command {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
     },
-    #[cfg(feature="links")]
     /// Show broken links
     Links {
         /// Which files to operate on, or all under cwd
@@ -136,7 +134,6 @@ fn main() -> Result<()> {
         }
 
         Command::Toc { files } => analyse::note_structure(&files_or_curdir(&files)?),
-        #[cfg(feature="links")]
         Command::Links { files, local } => links::broken_links(&files_or_curdir(&files)?, local),
         Command::Untagged { files } => tags::display_untagged_files(&files_or_curdir(&files)?),
         Command::Search { query } => search::search(&files_or_curdir(&[])?, &query),
@@ -154,23 +151,17 @@ fn main() -> Result<()> {
 /// If files is empty, return md files under the currend directory
 fn files_or_curdir(files: &[String]) -> Result<Vec<String>> {
     let mut out = Vec::new();
+    let mut files = files.to_vec();
     if files.is_empty() {
-        for file in glob("**/*.md")? {
-            if let Ok(f) = file {
-                out.push(f.to_string_lossy().to_string());
+        files.push("./".into());
+    }
+    for thing in files {
+        if thing.ends_with('/') {
+            for file in glob(&format!("{thing}**/*.md"))?.flatten() {
+                out.push(file.to_string_lossy().to_string());
             }
-        }
-    } else {
-        for thing in files {
-            if thing.ends_with("/") {
-                for file in glob(&format!("{thing}**/*.md"))? {
-                    if let Ok(f) = file {
-                        out.push(f.to_string_lossy().to_string());
-                    }
-                }
-            } else {
-                out.push(thing.to_string());
-            }
+        } else {
+            out.push(thing.to_string());
         }
     }
     Ok(out)

@@ -1,6 +1,6 @@
 [package]
 name = "an"
-version = "0.15.0"
+version = "0.15.1"
 authors = ["Chris Davison <c.jr.davison@gmail.com>"]
 edition = "2018"
 
@@ -13,6 +13,3 @@ anyhow = "1.0"
 tagsearch = "0.27.0"
 mdlc = "~0.8.1"
 rayon = "*"
-
-[features]
-links = []

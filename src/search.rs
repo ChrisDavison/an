@@ -1,8 +1,5 @@
 use anyhow::Result;
-use std::collections::{
-BTreeSet as Set,
-BTreeMap as Map,
-};
+use std::collections::{BTreeMap as Map, BTreeSet as Set};
 use std::path::Path;
 
 pub fn search(files: &[String], query: &[String]) -> Result<()> {
@@ -11,15 +8,24 @@ pub fn search(files: &[String], query: &[String]) -> Result<()> {
         let p = std::path::Path::new(&filename);
         let m = filter.matches(p);
         let out = [
-            if *m.get("title").unwrap_or(&false) { "T" } else {" "},
-            if *m.get("tags").unwrap_or(&false) { "t" } else {" "},
-            if *m.get("contents").unwrap_or(&false) { "c" } else {" "},
-        ].join("");
-        println!(
-            "{} {:60}",
-            out,
-            p.to_string_lossy(),
-        );
+            if *m.get("title").unwrap_or(&false) {
+                "T"
+            } else {
+                " "
+            },
+            if *m.get("tags").unwrap_or(&false) {
+                "t"
+            } else {
+                " "
+            },
+            if *m.get("contents").unwrap_or(&false) {
+                "c"
+            } else {
+                " "
+            },
+        ]
+        .join("");
+        println!("{} {:60}", out, p.to_string_lossy(),);
     }
 
     Ok(())
