@@ -55,7 +55,7 @@ enum Command {
         reverse: bool,
     },
     /// Wordcount
-    #[clap(alias = "w")]
+    #[clap(aliases = &["w", "wc"])]
     Words {
         /// Which files to operate on, or all under cwd
         files: Vec<String>,
@@ -153,17 +153,25 @@ fn main() -> Result<()> {
 
 /// If files is empty, return md files under the currend directory
 fn files_or_curdir(files: &[String]) -> Result<Vec<String>> {
+    let mut out = Vec::new();
     if files.is_empty() {
-        Ok(glob("**/*.md")?
-            .chain(glob("**/*.org")?)
-            .filter(|x| x.is_ok())
-            .map(|x| {
-                x.expect("Already tested each glob is ok")
-                    .to_string_lossy()
-                    .to_string()
-            })
-            .collect())
+        for file in glob("**/*.md")? {
+            if let Ok(f) = file {
+                out.push(f.to_string_lossy().to_string());
+            }
+        }
     } else {
-        Ok(files.to_vec())
+        for thing in files {
+            if thing.ends_with("/") {
+                for file in glob(&format!("{thing}**/*.md"))? {
+                    if let Ok(f) = file {
+                        out.push(f.to_string_lossy().to_string());
+                    }
+                }
+            } else {
+                out.push(thing.to_string());
+            }
+        }
     }
+    Ok(out)
 }
